@@ -137,7 +137,7 @@ EnrichmentResult <- eventReactive(input$run_enrichment, {
                                   organism = react, pAdjustMethod = "BH",
                                   pvalueCutoff = 0.05, qvalueCutoff = 0.2, readable = TRUE)
                 } else if (db == "Hallmark") {
-                    h_df <- msigdbr(species = species_name, category = "H")
+                    h_df <- msigdbr_compat(species_name, "H")
                     term2gene <- h_df[, c("gs_name", "entrez_gene")]
                     enricher(gene = gene_list, universe = universe, TERM2GENE = term2gene,
                              pAdjustMethod = "BH", pvalueCutoff = 0.05, qvalueCutoff = 0.2)
@@ -201,7 +201,7 @@ EnrichmentResult <- eventReactive(input$run_enrichment, {
                                pvalueCutoff = 0.05, pAdjustMethod = "BH",
                                nPermSimple = nperm, verbose = FALSE)
                 } else if (db == "Hallmark") {
-                    h_df <- msigdbr(species = species_name, category = "H")
+                    h_df <- msigdbr_compat(species_name, "H")
                     term2gene <- h_df[, c("gs_name", "entrez_gene")]
                     GSEA(geneList = gene_vec, TERM2GENE = term2gene,
                          minGSSize = minGS, maxGSSize = maxGS,

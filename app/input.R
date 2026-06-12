@@ -1,5 +1,10 @@
 # ─── Null-coalescing operator ─────────────���────────────────────────────────
-`%||%` <- function(a, b) if (!is.null(a) && length(a) > 0) a else b
+`%||%` <- function(a, b) {
+    if (is.null(a)) return(b)
+    if (length(a) == 0) return(b)
+    if (length(a) == 1 && is.character(a) && !nzchar(a)) return(b)
+    a
+}
 
 # ─── Auto-detect delimiter ────────────────────────────────────────────────
 read_delim_auto <- function(path) {
@@ -9,6 +14,26 @@ read_delim_auto <- function(path) {
     } else {
         fread(path, sep=",")
     }
+}
+
+# ── msigdbr version-compatibility shim ─────────────────────────────────────────
+# msigdbr >= 10 renamed category/subcategory -> collection/subcollection, split
+# KEGG into CP:KEGG_LEGACY/CP:KEGG_MEDICUS, and renamed entrez_gene -> ncbi_gene.
+# Take the legacy argument names, try the new API first, fall back to the old one,
+# and guarantee the gs_name / gene_symbol / entrez_gene columns callers expect.
+msigdbr_compat <- function(species, category, subcategory = NULL) {
+    sub_new <- if (identical(subcategory, "CP:KEGG")) "CP:KEGG_LEGACY" else subcategory
+    df <- tryCatch(
+        do.call(msigdbr, c(list(species = species, collection = category),
+                           if (!is.null(sub_new)) list(subcollection = sub_new))),
+        error = function(e)
+            do.call(msigdbr, c(list(species = species, category = category),
+                               if (!is.null(subcategory)) list(subcategory = subcategory)))
+    )
+    if (!"entrez_gene" %in% colnames(df) && "ncbi_gene" %in% colnames(df)) {
+        df$entrez_gene <- df$ncbi_gene
+    }
+    df
 }
 
 # ─── Cached demo data (generated once per session) ───────────────────────
